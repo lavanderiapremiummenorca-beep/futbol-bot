@@ -15,59 +15,50 @@ _MODEL_CANDIDATES = [
     "gemini-2.5-flash-lite", "gemini-2.0-flash-001", "gemini-1.5-flash",
 ]
 BGS = ["blue", "green", "orange", "purple", "teal", "red"]
-
-# Temas y formatos que rotan por dia para no repetir (anti "contenido inautentico")
+# AMBITOS del futbol que rotan por dia (se usan como "a evitar hoy" para forzar variedad)
 TEMAS = [
-    "por que once jugadores",
-    "el origen del penalti",
-    "el Maracanazo de 1950",
-    "por que el cesped va a rayas",
-    "el origen de las tarjetas",
-    "por que existe el fuera de juego",
-    "como era el balon antiguo",
-    "por que se juegan 90 minutos",
-    "el origen de los mundiales",
-    "por que los porteros visten distinto",
-    "reglas curiosas del futbol",
-    "el primer partido de la historia",
-    "de donde viene la palabra futbol",
-    "los estadios mas grandes del mundo",
-    "el origen del saque de banda",
-    "por que se cambian de camiseta",
-    "el origen de la figura del arbitro",
-    "las remontadas mas historicas",
-    "por que hay tiempo de descuento",
-    "el origen de la Champions"
+    "los Mundiales", "la Champions League", "las remontadas historicas",
+    "las grandes rivalidades y clasicos", "las leyendas del futbol",
+    "las tragedias del futbol", "los goles miticos",
+    "los ascensos y gestas de equipos humildes", "la historia de las selecciones",
+    "los porteros legendarios", "los entrenadores miticos", "el futbol femenino",
+    "las finales inolvidables", "los fichajes que hicieron historia",
+    "el futbol de los anos ochenta y noventa",
 ]
+# ESTILOS que se intercalan cada dia (historia con emocion, no lista)
 FORMATOS = [
-    "mito vs realidad", "un dato sorprendente con ejemplo numerico",
-    "el error comun que casi todos cometen", "top 3 rapido",
-    "esto no te lo cuentan", "comparativa antes vs despues",
-    "una pregunta que pica la curiosidad y su respuesta",
+    "la noche epica: una remontada o final inolvidable contado minuto a minuto",
+    "la tragedia o el drama humano del futbol, contado con respeto",
+    "el gesto que emociono: deportividad, lealtad o superacion",
+    "el ascenso de una leyenda: el momento en que se hizo grande",
+    "la rivalidad historica: el origen y el fuego de un clasico",
+    "el dato o record brutal, pero narrado como una historia con emocion",
 ]
 
 SCHEMA_INSTRUCCION = """
 Devuelve UNICAMENTE un JSON valido (sin texto alrededor) con esta forma exacta:
 {
-  "title": "titulo honesto y con gancho, max 90 caracteres, puede llevar 1 emoji y #shorts",
-  "description": "1-2 frases de valor + CTA. Solo datos verificables y atemporales.",
-  "hashtags": ["Shorts", "futbol", "curiosidades", "deporte"],  // 3 a 5, sin '#', el primero SIEMPRE 'Shorts'
-  "bg": "uno de: blue, green, orange, purple, teal, red",
-  "broll": "2-4 palabras EN INGLES para metraje de archivo (ej: 'soccer stadium ball'). SIN logos, escudos ni jugadores reales.",
-  "ai_disclosure": false,
+  "title": "titulo epico y fiel, max 90 caracteres, puede llevar 1 emoji y #shorts",
+  "description": "1-2 frases con emocion + una pregunta de debate. Anade al final: 'Basado en hechos reales.'",
+  "hashtags": ["Shorts", "futbol", "leyendas", "historia"],  // 3 a 5, sin '#', el primero SIEMPRE 'Shorts'
+  "bg": "uno de: green, blue, teal, purple",
+  "broll": "2-4 palabras EN INGLES de escena de futbol GENERICA (ej: 'stadium night crowd')",
+  "broll_list": ["3 o 4 escenas GENERICAS de futbol EN INGLES, en orden (ej: 'stadium floodlights night', 'football on grass closeup', 'cheering crowd stands')"],
+  "ai_disclosure": true,
   "lines": [
-    {"voice": "frase corta que se narra (con numeros en palabras: 'cien euros', no '100')",
-     "cap": "subtitulo MUY corto en pantalla (2-4 palabras, puede llevar cifras)"}
+    {"voice": "frase corta y con emocion (numeros en palabras: 'dos a cero', no '2-0')",
+     "cap": "subtitulo MUY corto en pantalla (2-4 palabras)"}
   ]
 }
-Reglas del guion:
-- Entre 10 y 13 lineas. Cada 'voice' es una frase corta y natural (el video debe durar 20-40 s).
-- La PRIMERA linea es el gancho: sin saludos ni intro, engancha en el primer segundo.
-- La ULTIMA linea es el CTA: invita a seguir ("Sigueme para mas datos de futbol") o a comentar.
-- 'cap' nunca lleva emojis (la fuente no los dibuja). 'voice' escribe los numeros con letras.
-- Espanol, apasionado y agil. Datos sorprendentes, verificables y atemporales (evita estadisticas que caducan).
+Reglas del guion (formato 'Leyendas'):
+- Entre 8 y 11 lineas. Cuenta UNA historia real del futbol con emocion, tension y desenlace (el video dura 30-45 s).
+- NO ES UNA LISTA: prohibido 'sabias que', 'top 3' o 'datos sueltos'. Es un RELATO que emociona.
+- RIGOR: hechos, fechas y resultados reales; nombres correctos; nada inventado.
+- NUNCA describas ni pidas imagenes de jugadores reales identificables: el fondo son escenas GENERICAS (estadio, balon, aficion).
+- APERTURA (linea 1, VARIADA cada dia, nunca identica a la de ayer): un gancho epico. Ej: 'La noche que el futbol se paro para ver esto.'
+- CIERRE (ultima linea, VARIADO cada dia): remata con emocion e INVITA AL DEBATE. Ej: 'El mas grande de la historia? Dilo en comentarios.'
+- Tono de narrador epico y apasionado. 'cap' sin emojis. 'voice' con numeros en letras. Respeto a todos.
 """
-
 def _run_seed():
     try:
         return int(os.environ.get("GITHUB_RUN_NUMBER", "0"))
@@ -149,7 +140,7 @@ def _validate(s):
         hs = ["Shorts"] + [h for h in hs if h.lower() != "shorts"]
     s["hashtags"] = hs[:5]
     assert s.get("title"), "sin titulo"
-    s.setdefault("description", "Dato de futbol en 30 segundos. Sigueme para mas curiosidades.")
+    s.setdefault("description", "Una historia del futbol que pone la piel de gallina. Basado en hechos reales.")
     s["id"] = "ia-" + datetime.date.today().isoformat()
     s.pop("chart", None)
     return s
@@ -161,7 +152,7 @@ def generate():
     try:
         master = open(os.path.join(BASE, "PROMPT-MAESTRO.md"), encoding="utf-8").read()
     except Exception:
-        master = "Eres un productor experto de YouTube Shorts de curiosidades de futbol en espanol."
+        master = "Eres un narrador epico de historias del futbol para YouTube Shorts, en espanol, que emociona y busca el debate."
     formato = random.choice(FORMATOS)
     hoy = datetime.date.today().isoformat()
     # Usamos TEMAS solo como "lo obvio a EVITAR", para empujar novedad
@@ -169,13 +160,12 @@ def generate():
     seed = _run_seed()
     prompt = (master
               + f"\n\n---\nTAREA DE HOY ({hoy}):\n"
-              + "ELIGE TU MISMO un tema NUEVO, especifico y original dentro de la tematica "
-                "de ESTE canal (segun las instrucciones de arriba). Sorprendeme con un angulo "
-                "fresco y concreto; evita los topicos mas manidos y ya vistos.\n"
-              + (f"Para forzar variedad, HOY NO trates sobre estos (elige algo distinto): {evitar}.\n" if evitar else "")
-              + f"Desarrollalo con este enfoque/formato: {formato}.\n"
-              + "Debe ser un tema DISTINTO cada dia; se original.\n"
-              + "Cumple TODAS las reglas de arriba (cumplimiento primero, luego viralidad).\n"
+              + "ELIGE TU MISMO un momento REAL del futbol (una noche epica, una leyenda, un "
+                "drama, una gesta) y cuentalo con emocion, como una historia. Debe ser cierto.\n"
+              + (f"Para forzar variedad, HOY evita estos ambitos (elige otro distinto): {evitar}.\n" if evitar else "")
+              + f"Cuentalo con este ESTILO de hoy: {formato}.\n"
+              + "Apertura y cierre VARIADOS (nunca los de ayer); titulo y descripcion UNICOS de hoy. Que HOY se note claramente distinto a cualquier dia anterior. Es un RELATO con emocion, NO una lista.\n"
+              + "Recuerda: para el fondo, escenas GENERICAS de estadio; nunca jugadores reales.\n"
               + SCHEMA_INSTRUCCION)
     try:
         raw = _call_gemini(prompt, key)
